@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VOLTMASTER PRO v1.8.0 | ST-BALANCED</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root { --bg:#020617; --card:#111827; --accent:#22c55e; --text:#94a3b8; --border:#334155; --pro:#f59e0b; --err:#ef4444; }
+body{margin:0;font-family: Arial, sans-serif;background:var(--bg);color:white;padding-bottom:50px;}
+header{text-align:center;padding:25px;background:#0f172a;border-bottom:4px solid var(--pro);}
+header h1 { margin: 0; font-size: 1.5rem; letter-spacing: 1px; }
+header p { margin: 5px 0 0 0; color: var(--pro); font-weight: bold; font-size: 0.8rem; text-transform: uppercase;}
+.container{max-width:1100px;margin:auto;padding:10px;}
+.card{background:var(--card);padding:15px;border-radius:12px;margin-top:15px;border:1px solid var(--border);}
+h3{margin-top:0;color:var(--accent);font-size:1rem;border-bottom:1px solid var(--border);padding-bottom:5px;margin-bottom:10px;}
+.grid{display:grid;grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));gap:10px;margin-bottom:10px;}
+input,select{width:100%;padding:8px;background:#0f172a;color:white;border:1px solid var(--border);border-radius:4px;box-sizing: border-box;font-size:0.85rem;}
+button{width:100%;padding:15px;margin-top:15px;background:var(--accent);border:none;font-weight:bold;cursor:pointer;border-radius:4px;font-size:1rem;color:#020617;}
+.result{white-space:pre-wrap;margin-top:20px;background:#000;padding:25px;display:none;border-radius:8px;font-family: 'Courier New', monospace;font-size:0.85rem;border:1px solid var(--accent);line-height:1.4;}
+label{font-size:0.7rem;color:var(--text);display:block;margin-bottom:3px;}
+.settings-panel { background: #1e293b; padding: 15px; border-radius: 8px; border-left: 4px solid var(--pro); margin-top: 15px; }
+.ac-group { border: 1px dashed var(--border); padding: 8px; border-radius: 4px; margin-top: 5px; }
+.validation-msg { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--err); color: var(--err); padding: 10px; border-radius: 6px; margin-top: 15px; display: none; font-size: 0.8rem; }
+.tooltip { position: relative; display: inline-block; cursor: help; color: var(--pro); margin-left: 5px; font-weight: bold; }
+.tooltip.tooltiptext { visibility: hidden; width: 200px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 6px; padding: 5px; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -100px; opacity: 0; transition: opacity 0.3s; border: 1px solid var(--pro); font-size: 0.7rem; font-weight: normal; }
+.tooltip:hover.tooltiptext { visibility: visible; opacity: 1; }
+.validation-pass { background: rgba(34, 197, 94, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 10px; border-radius: 6px; margin-top: 15px; font-size: 0.8rem; display: none; }
+</style>
+</head>
+<body>
+<header>
+    <h1>VOLTMASTER PRO <span class="badge">v1.8.0 ENGINEER</span></h1>
+    <p>Professional Electrical Design & Compliance Suite</p>
+</header>
+<div class="container">
+    <div class="card">
+        <h3>1. Project & Branding</h3>
+        <div class="grid">
+            <div><label>Company Name</label><input id="compName" placeholder="Volt Solutions Sdn Bhd" type="text"></div>
+            <div><label>Prepared By</label><input id="prepBy" placeholder="Firdaus" type="text"></div>
+            <div><label>Project Ref</label><input id="projRef" placeholder="PROJ/2026/001" type="text"></div>
+        </div>
+    <div class="settings-panel">
+        <h3 style="color:var(--pro); border-color:var(--pro)">Pro Setting: Dynamic Pricing (RM)</h3>
+        <div class="grid">
+            <div><label>Light/Fan Pt</label><input id="rateL" value="85" type="number"></div>
+            <div><label>Exhaust Fan Pt</label><input id="rateEF" value="95" type="number"></div>
+            <div><label>Socket Point</label><input id="rateS" value="160" type="number"></div>
+            <div><label>Aircond Point</label><input id="rateAC" value="250" type="number"></div>
+            <div><label>Water Heater Pt</label><input id="rateWH" value="280" type="number"></div>
+            <div><label>Outdoor Light Pt</label><input id="rateOL" value="120" type="number"></div>
+            <div><label>DB Base Rate</label><input id="rateDB" value="650" type="number"></div>
+        </div>
+    <div class="card">
+        <h3>2. System Configuration</h3>
+        <div class="grid">
+            <div><label>Supply System</label><select id="phaseType" onchange="validateInput()"><option value="1">1-Phase (230V)</option><option value="3">3-Phase (400V)</option></select></div>
+            <div><label>Diversity (DF)</label><input id="pDF" value="Auto" disabled style="background:#0f172a; color:var(--pro); font-weight:bold;"></div>
+            <div><label>Power Factor <span class="tooltip">(? )<span class="tooltiptext">Typical: 0.85 for Residential, 0.90+ for Commercial with Cap Bank</span></span></label><input id="pPF" value="0.85" step="0.05" type="number" oninput="validateInput()"></div>
+            <div><label>Wiring Style</label><select id="wireStyle"><option value="conduit">High Impact Conduit (ST Std)</option><option value="concealed">Concealed Wiring</option><option value="trunking">Steel Trunking</option></select></div>
+        </div>
+    </div>
+    <div class="card">
+        <h3>3. Load Quantities</h3>
+        <div class="grid">
+            <div><label>Lighting</label><input id="qL" value="10" type="number" oninput="validateInput()"></div>
+            <div><label>Ceiling Fan</label><input id="qF" value="5" type="number" oninput="validateInput()"></div>
+            <div><label>Exhaust Fan</label><input id="qEF" value="0" type="number" oninput="validateInput()"></div>
+            <div><label>Socket Pts</label><input id="qS" value="12" type="number" oninput="validateInput()"></div>
+            <div><label>Water Heater</label><input id="qWH" value="1" type="number" oninput="validateInput()"></div>
+            <div><label>Outdoor Light</label><input id="qOL" value="2" type="number" oninput="validateInput()"></div>
+        </div>
+        <div class="grid">
+            <div class="ac-group"><label>AC 1 (HP)</label><input id="hp1" value="1.0" step="0.5" type="number" oninput="validateInput()"><label>Qty</label><input id="qty1" value="1" type="number" oninput="validateInput()"></div>
+            <div class="ac-group"><label>AC 2 (HP)</label><input id="hp2" value="1.5" step="0.5" type="number" oninput="validateInput()"><label>Qty</label><input id="qty2" value="0" type="number" oninput="validateInput()"></div>
+            <div class="ac-group"><label>AC 3 (HP)</label><input id="hp3" value="2.5" step="0.5" type="number" oninput="validateInput()"><label>Qty</label><input id="qty3" value="0" type="number" oninput="validateInput()"></div>
+        </div>
+    </div>
+   <div class="card">
+        <h3>4. Technical Parameters</h3>
+        <div class="grid">
+            <div><label>Earthing System</label><select id="earthType"><option value="TT">TT (Standard Malaysia)</option><option value="TN-S">TN-S</option><option value="TN-C-S">TN-C-S (PME)</option></select></div>
+            <div><label>Earth Resistance (Ω)</label><input id="earthRes" value="1.0" type="number" step="0.1"></div>
+            <div><label>Main MCB Curve</label><select id="mcbType"><option value="B">Type B</option><option value="C" selected>Type C</option><option value="D">Type D</option></select></div>
+            <div><label>Ze L-N (Ω) <span class="tooltip">(? )<span class="tooltiptext">External line impedance. Use 0.35Ω as default assumption or enter actual loop tester reading.</span></span></label><input id="zeLN" value="0.35" type="number" step="0.01" oninput="validateInput()"></div>
+        </div>
+        <div class="grid">
+            <div><label>Light (W)/unit</label><input id="wL" value="15" type="number" oninput="validateInput()"></div>
+            <div><label>Fan (W)/unit</label><input id="wF" value="75" type="number" oninput="validateInput()"></div>
+            <div><label>Exhaust (W)/unit</label><input id="wEF" value="40" type="number" oninput="validateInput()"></div>
+            <div><label>Outdoor Light (W)/unit</label><input id="wOL" value="30" type="number" oninput="validateInput()"></div>
+            <div><label>Heater (W)/unit</label><input id="wWH" value="3000" type="number" oninput="validateInput()"></div>
+            <div><label>Max. Length (m)</label><input id="cLen" value="30" type="number" oninput="validateInput()"></div>
+        </div>
+        <div class="grid">
+            <div><label>Socket Mode</label><select id="pS">
+    <option value="10">Ring Main (2.5mm² Cable / 32A MCB)</option>
+    <option value="2">Radial (4.0mm² Cable / 20A MCB)</option>
+    <option value="2.5">Radial (2.5mm² Cable / 20A MCB)</option>
+</select></div>
+            <div><label>Ambient Temp Ca</label><select id="derateCa"><option value="1.03">30°C</option><option value="1.0" selected>35°C</option><option value="0.94">40°C</option><option value="0.87">45°C</option></select></div>
+            <div><label>Grouping Cg</label><select id="derateCg"><option value="1.0">1 Circuit</option><option value="0.8" selected>2-3 Circuits</option><option value="0.7">4-5 Circuits</option><option value="0.65">6+ Circuits</option></select></div>
+            <div><label>Insulation Ci</label><select id="derateCi"><option value="1.0" selected>No</option><option value="0.75">Yes >500mm</option><option value="0.5">Yes <500mm</option></select></div>
+        </div>
+        <div id="vMsg" class="validation-msg"></div>
+        <button id="genBtn" onclick="calc()">GENERATE PROFESSIONAL COMPLIANCE REPORT</button>
+        <div id="out" class="result"></div>
+        <button id="sldPdfBtn" style="background:#1e293b; color:#22c55e; border:2px solid #22c55e; display:none; margin-top:10px;" onclick="exportSLDPdf()">EXPORT SLD DRAWING (PDF)</button>
+        <button id="pdfBtn" style="background:#334155;color:white;display:none;margin-top:10px;" onclick="pdf()">EXPORT MULTI-PAGE PDF REPORT</button>
+        <button id="resetBtn" style="background:var(--err);color:white;margin-top:10px;" onclick="resetBorang()">MULAKAN PROJEK BARU (RESET)</button>
+    </div>
+</div>
+<script>
+// --- GLOBAL CONSTANTS ---
+const VOLT_1PH = 230;
+const VOLT_3PH = 400;
+const HP_TO_WATT = 746;
+const SOCKET_WATT = 250;
+const breakers = [32, 40, 63, 80, 100, 125];
+const mvAM = { "1.5": 29, "2.5": 18, "4.0": 11, "6.0": 7.3, "10.0": 4.4, "16.0": 2.8, "25.0": 1.8, "35.0": 1.35 };
+const resCu = { "1.5": 12.10, "2.5": 7.41, "4.0": 4.61, "6.0": 3.08, "10.0": 1.83, "16.0": 1.15, "25.0": 0.727, "35.0": 0.524 };
+const zsTable = { "B": {6:7.67,10:4.60,16:2.87,20:2.30,32:1.44,40:1.15,63:0.73}, "C": {6:3.83,10:2.30,16:1.44,20:1.15,32:0.72,40:0.57,63:0.36}, "D": {6:1.92,10:1.15,16:0.72,20:0.57,32:0.36,40:0.29,63:0.18} };
+const izTable = { "1.5": 19.5, "2.5": 27, "4.0": 36, "6.0": 46, "10.0": 63, "16.0": 85, "25.0": 112, "35.0": 138 };
+
+function getInputValue(id) {
+    const el = document.getElementById(id);
+    return el? (isNaN(parseFloat(el.value))? el.value : parseFloat(el.value)) : 0;
+}
+
+function calculateSystemLoad() {
+    let bebanAsas = (getInputValue('qL') * getInputValue('wL')) + (getInputValue('qF') * getInputValue('wF')) + (getInputValue('qEF') * getInputValue('wEF')) + (getInputValue('qOL') * getInputValue('wOL')) + (getInputValue('qS') * SOCKET_WATT) + (getInputValue('qWH') * getInputValue('wWH'));
+    let bebanAC = (getInputValue('hp1') * getInputValue('qty1') * HP_TO_WATT) + (getInputValue('hp2') * getInputValue('qty2') * HP_TO_WATT) + (getInputValue('hp3') * getInputValue('qty3') * HP_TO_WATT);
+    return { tcl: bebanAsas + bebanAC, acW: bebanAC };
+}
+
+function validateInput() {
+    const vMsg = document.getElementById('vMsg');
+    let errors = [];
+    const phase = document.getElementById('phaseType').value;
+    const len = getInputValue('cLen');
+    const pf = getInputValue('pPF') || 0.85;
+    const loadData = calculateSystemLoad();
+    let ibVal = (phase == "1")? (loadData.tcl / (VOLT_1PH * pf)) : (loadData.tcl / (1.732 * VOLT_3PH * pf));
+    if(phase == "1" && ibVal > 50) errors.push("CRITICAL: Load exceeds 1-Phase limit (50A). Upgrade to 3-Phase supply required.");
+    if(len > 65) errors.push("WARNING: Cable length > 65m. Potential Voltage Drop violation (>4%).");
+    if(errors.length > 0) {
+        vMsg.className = "validation-msg";
+        vMsg.style.display = "block";
+        vMsg.innerHTML = "<b>⚠️ ST COMPLIANCE ALERTS:</b><br>" + errors.map(e => "• " + e).join("<br>");
+    } else {
+        vMsg.className = "validation-pass";
+        vMsg.style.display = "block";
+        vMsg.innerHTML = "<b>✅ SYSTEM CHECK:</b> All parameters within safe ST limits.";
+    }
+}
+
+function getACSpecs(hp) {
+    if (hp <= 1.5) return { mcb: "16A", cable: "2.5mm²", val: 2.5 };
+    if (hp <= 2.5) return { mcb: "20A", cable: "4.0mm²", val: 4.0 };
+    return { mcb: "32A", cable: "6.0mm²", val: 6.0 };
+}
+
+function getContainmentSizing(cableSize, style) {
+    if (style === "concealed") return "";
+    if (cableSize <= 2.5) return style === "conduit"? "Rec. Conduit: 20mm (High Impact)" : "Rec. Trunking: 50x50mm (Steel)";
+    if (cableSize <= 6.0) return style === "conduit"? "Rec. Conduit: 25mm (High Impact)" : "Rec. Trunking: 75x75mm (Steel)";
+    return style === "conduit"? "Rec. Conduit: 32mm" : "Rec. Trunking: 100x100mm";
+}
+
+function checkCableAdequacy(cableSize, Ib) {
+    const Ca = getInputValue('derateCa');
+    const Cg = getInputValue('derateCg');
+    const Ci = getInputValue('derateCi');
+    const Iz_base = izTable[cableSize.toFixed(1)] || 27;
+    const Iz = Iz_base * Ca * Cg * Ci;
+    return { Iz: Iz.toFixed(1), status: Ib <= Iz? "OK" : "UNDERSIZED" };
+}
+function calc() {
+    try {
+        const phase = getInputValue('phaseType');
+        const wStyle = document.getElementById('wireStyle').value;
+        const len = getInputValue('cLen');
+        const pf = getInputValue('pPF') || 0.85;
+        const vBase = (phase == "1"? VOLT_1PH : VOLT_3PH);
+        const loadL = getInputValue('qL') * getInputValue('wL'), loadF = getInputValue('qF') * getInputValue('wF'), loadEF = getInputValue('qEF') * getInputValue('wEF'), loadOL = getInputValue('qOL') * getInputValue('wOL'), loadS = getInputValue('qS') * SOCKET_WATT, loadWH = getInputValue('qWH') * getInputValue('wWH');
+        let acTotalW = 0, acQty = 0, acArray = [];
+        for(let i=1; i<=3; i++){
+            let h = getInputValue('hp'+i), q = getInputValue('qty'+i);
+            if(q > 0){ let w = h * HP_TO_WATT; acTotalW += (w * q); acQty += q; for(let j=0; j<q; j++) acArray.push(w); }
+        }
+        const TCL = loadL + loadF + loadEF + loadOL + loadS + loadWH + acTotalW;
+        const mdL = (loadL + loadF + loadEF + loadOL) * 0.66;
+        const sCcts = Math.ceil(getInputValue('qS') / getInputValue('pS'));
+        const mdS = sCcts > 0? (SOCKET_WATT * getInputValue('pS')) + ((sCcts - 1) * (SOCKET_WATT * getInputValue('pS')) * 0.4) : 0;
+        let fixedAppliances = [];
+        if(getInputValue('qWH') > 0) for(let i=0; i<getInputValue('qWH'); i++) fixedAppliances.push(getInputValue('wWH'));
+        fixedAppliances = fixedAppliances.concat(acArray).sort((a,b) => b-a);
+        let mdFixed = 0;
+        fixedAppliances.forEach((watt, index) => { if(index < 2) mdFixed += watt; else mdFixed += (watt * 0.25); });
+        const MD = mdL + mdS + mdFixed;
+        const autoDF = (MD / (TCL||1)).toFixed(2);
+        document.getElementById('pDF').value = autoDF;
+        const Ib = (phase == "1")? MD / (VOLT_1PH * pf) : MD / (1.732 * VOLT_3PH * pf);
+        let mainS = breakers.find(b => b >= (Ib * 1.25)) || 63;
+        if (phase == "1" && mainS < 32) mainS = 32;
+        if (phase == "3" && mainS < 40) mainS = 40;
+        const mainCab = (mainS <= 32)? 6 : (mainS <= 40)? 10 : (mainS <= 63)? 16 : (mainS <= 80)? 25 : 35;
+        const earthCab = (mainCab <= 16)? mainCab : (mainCab <= 35)? 16 : 25;
+        const mainCableCheck = checkCableAdequacy(mainCab, Ib);
+        const mvMain = mvAM[mainCab.toFixed(1)] || 2.8;
+        const vDropMain = (phase == "1")? (mvMain * Ib * len) / 1000 : (mvMain * Ib * len * 0.866) / 1000;
+        const vDropPctMain = (vDropMain / vBase) * 100;
+        const earthType = document.getElementById('earthType').value;
+        const earthRes = getInputValue('earthRes');
+        const r1Val = resCu[mainCab.toFixed(1)] || 1.15;
+        const r2Val = resCu[earthCab.toFixed(1)] || 1.15;
+        const r1r2 = ((r1Val + r2Val) * len * 1.2) / 1000;
+        let ze = 0;
+        if (earthType === "TT") ze = earthRes;
+        else if (earthType === "TN-S") ze = 0.8;
+        else if (earthType === "TN-C-S") ze = 0.35;
+        let zs = ze + r1r2;
+        const mcbType = document.getElementById('mcbType').value;
+        const zsLimit = zsTable[mcbType][mainS] || (VOLT_1PH / (mainS * 10));
+        const zsStatus = zs <= zsLimit? "PASSED" : "FAILED";
+        const pefc = (VOLT_1PH / zs) / 1000;
+        const zeLN = getInputValue('zeLN') || 0.35;
+        const r1rn = ((r1Val + r1Val) * len * 1.2) / 1000;
+        const psc = (VOLT_1PH / (zeLN + r1rn)) / 1000;
+        const breakingCapacity = mainS <= 63? 6 : 10;
+        const maxFault = Math.max(pefc, psc);
+        const pscStatus = maxFault <= breakingCapacity? "ADEQUATE" : "INADEQUATE";
+        let earthNote = "";
+        if (zsStatus === "FAILED") {
+            if (earthType === "TT") {
+                earthNote = `REMARKS (TT SYSTEM): Loop Impedance Zs failed. MCB may not provide fault protection. RCD protection is MANDATORY as per Regulation 36(2) of Electricity Regulations 1994.`;
+            } else {
+                earthNote = `CRITICAL REMARKS (${earthType} SYSTEM): High Loop Impedance detected. In TN systems, this indicates a weak return path to the source. MCB magnetic trip is UNRELIABLE. Immediate check on earth bonding and RCD sensitivity (10mA/30mA/100mA) is required for safety compliance.`;
+            }
+        }
+        let stWarnings = [];
+        if(zsStatus === "FAILED") stWarnings.push(`CRITICAL: Loop Impedance (Zs) is ${zs.toFixed(2)}Ω. Limit ${zsLimit}Ω. Standard MCB trip may FAIL.`);
+        if(vDropPctMain > 4) stWarnings.push("CRITICAL: Voltage Drop exceeds 4% (Non-compliant with ST).");
+        if(pscStatus === "INADEQUATE") stWarnings.push("CRITICAL: Breaking capacity insufficient for fault level.");
+        if(mainCableCheck.status === "UNDERSIZED") stWarnings.push(`CRITICAL: Main cable ${mainCab}mm² Iz=${mainCableCheck.Iz}A < Ib=${Ib.toFixed(1)}A after derating.`);
+        const vMsg = document.getElementById('vMsg');
+        if(stWarnings.length > 0){
+            vMsg.style.display = "block";
+            vMsg.innerHTML = "<b>⚠️ ST CRITICAL WARNINGS:</b><br>" + stWarnings.map(e => "• " + e).join("<br>");
+        }
+        let phaseLoads = { R: 0, Y: 0, B: 0 };
+        let allCircuits = [];
+        const queueCct = (qty, ptsPerCct, watt, label) => {
+            if (qty <= 0) return;
+            const numCcts = Math.ceil(qty / (ptsPerCct || 1));
+            const loadPerCct = watt * (qty / numCcts);
+            for(let i=0; i<numCcts; i++) allCircuits.push({ label: label, watt: loadPerCct });
+        };
+        queueCct(getInputValue('qL'), 10, getInputValue('wL'), "Lighting");
+        queueCct(getInputValue('qF'), 10, getInputValue('wF'), "Ceiling Fan");
+        queueCct(getInputValue('qEF'), 10, getInputValue('wEF'), "Exhaust Fan");
+        queueCct(getInputValue('qOL'), 10, getInputValue('wOL'), "Outdoor Light");
+        if(getInputValue('qS') > 0) queueCct(getInputValue('qS'), getInputValue('pS'), SOCKET_WATT, "Socket Outlet");
+        for(let i=1; i<=3; i++) {
+            let h = getInputValue('hp'+i), q = getInputValue('qty'+i);
+            if(q > 0) queueCct(q, 1, h*HP_TO_WATT, `AC ${h}HP`);
+        }
+        if(getInputValue('qWH') > 0) queueCct(getInputValue('qWH'), 1, getInputValue('wWH'), "Water Heater");
+        allCircuits.sort((a, b) => b.watt - a.watt);
+        allCircuits.forEach(cct => {
+            let lightest = 'R';
+            if (phaseLoads.Y < phaseLoads[lightest]) lightest = 'Y';
+            if (phaseLoads.B < phaseLoads[lightest]) lightest = 'B';
+            phaseLoads[lightest] += cct.watt;
+        });
+        let balancingReport = "";
+        if (phase == "3") {
+            let maxP = Math.max(phaseLoads.R, phaseLoads.Y, phaseLoads.B);
+            let minP = Math.min(phaseLoads.R, phaseLoads.Y, phaseLoads.B);
+            balancingReport = `
+[PHASE LOADING ANALYSIS (AUTO-BALANCED)]
+
+Red Phase (R) : ${(phaseLoads.R / 1000).toFixed(2)} kW
+Yellow Phase (Y): ${(phaseLoads.Y / 1000).toFixed(2)} kW
+Blue Phase (B) : ${(phaseLoads.B / 1000).toFixed(2)} kW
+Max Imbalance : ${((maxP - minP) / 1000).toFixed(2)} kW
+------------------------------------------------------------\n`;
+        }
+        let totalMCB = 0, circuitLines = "";
+        const getVdLine = (watt, cableVal, len, ph) => {
+            const iLine = watt / (VOLT_1PH * pf);
+            const mvLine = mvAM[cableVal.toFixed(1)] || 29;
+            const vdVal = (mvLine * iLine * len) / 1000;
+            const vdPct = (vdVal / VOLT_1PH) * 100;
+            return { v: vdVal.toFixed(2), pct: vdPct.toFixed(2), i: iLine.toFixed(2) };
+        };
+        const genR = (qty, label, rating, ptsPerCct, mcb, cable, cableVal, rcd = "100mA") => {
+            if (qty <= 0) return "";
+            const circuits = Math.ceil(qty / ptsPerCct);
+            totalMCB += circuits;
+            const vdObj = getVdLine(rating * (qty/circuits), cableVal, len, phase);
+            const cableChk = checkCableAdequacy(cableVal, parseFloat(vdObj.i));
+            let cont = getContainmentSizing(cableVal, wStyle);
+            return `${label}\n - Rating: ${rating}W/unit | Qty: ${qty}\n - MCB: ${mcb} (6kA) | Cable: ${cable} | RCD: ${rcd} | Circuits: ${circuits}\n - Est. Ib: ${vdObj.i}A | Iz: ${cableChk.Iz}A | Status: ${cableChk.status}\n - Estimated VD: ${vdObj.v}V (${vdObj.pct}%)\n${cont?` ${cont}\n`:''}\n`;
+        };
+        circuitLines += genR(getInputValue('qL'), "A. LIGHTING", getInputValue('wL'), 10, "6A", "1.5mm²", 1.5);
+        circuitLines += genR(getInputValue('qF'), "B. CEILING FANS", getInputValue('wF'), 10, "10A", "1.5mm²", 1.5);
+        circuitLines += genR(getInputValue('qEF'), "C. EXHAUST FANS", getInputValue('wEF'), 10, "6A", "1.5mm²", 1.5);
+        circuitLines += genR(getInputValue('qOL'), "D. OUTDOOR LIGHTS", getInputValue('wOL'), 10, "6A", "1.5mm²", 1.5, "30mA (Dedicated)");
+        if(getInputValue('qS') > 0) {
+            const socketMode = getInputValue('pS');
+            const ptsPerCct = (socketMode == "10")? 10 : 2;
+            const sCircuits = Math.ceil(getInputValue('qS') / ptsPerCct);
+            totalMCB += sCircuits;
+            let sMCB, sCableVal;
+            if(socketMode == "10") { sMCB = "32A (Ring)"; sCable = "2.5mm²"; sCableVal = 2.5; }
+            else if(socketMode == "2") { sMCB = "20A (Radial)"; sCable = "4.0mm²"; sCableVal = 4.0; }
+            else { sMCB = "20A (Radial)"; sCable = "2.5mm²"; sCableVal = 2.5; }
+            const sVd = getVdLine(SOCKET_WATT * ptsPerCct, sCableVal, len, phase);
+            const sCableChk = checkCableAdequacy(sCableVal, parseFloat(sVd.i));
+            let sCont = getContainmentSizing(sCableVal, wStyle);
+            circuitLines += `E. SOCKET OUTLETS\n - Rating: 250W/pt | Qty: ${getInputValue('qS')}\n - MCB: ${sMCB} (6kA) | Cable: ${sCable} | RCD: 30mA | Circuits: ${sCircuits}\n - Est. Ib: ${sVd.i}A | Iz: ${sCableChk.Iz}A | Status: ${sCableChk.status}\n - Estimated VD: ${sVd.v}V (${sVd.pct}%)\n${sCont? ` ${sCont}\n`:''}\n`;
+        }
+        if(acQty > 0) {
+            circuitLines += `F. AIR-CONDITIONING\n`;
+            for(let i=1; i<=3; i++) {
+                let h = getInputValue('hp'+i), q = getInputValue('qty'+i);
+                if(q > 0) {
+                    totalMCB += q;
+                    let s = getACSpecs(h);
+                    const acVd = getVdLine(h*HP_TO_WATT, s.val, len, phase);
+                    const acCableChk = checkCableAdequacy(s.val, parseFloat(acVd.i));
+                    let acCont = getContainmentSizing(s.val, wStyle);
+                    circuitLines += ` - ${h}HP Unit | Qty: ${q} | MCB: ${s.mcb} (6kA) | Cable: ${s.cable} | Circuits: ${q} | VD: ${acVd.v}V (${acVd.pct}%) | Iz: ${acCableChk.Iz}A ${acCableChk.status}\n${acCont? ` ${acCont}\n` : ''}`;
+                }
+            }
+            circuitLines += `\n`;
+        }
+        if(getInputValue('qWH') > 0) {
+            let whQ = getInputValue('qWH'); totalMCB += whQ;
+            const whVd = getVdLine(getInputValue('wWH'), 4.0, len, phase);
+            const whCableChk = checkCableAdequacy(4.0, parseFloat(whVd.i));
+            let whCont = getContainmentSizing(4.0, wStyle);
+            circuitLines += `G. WATER HEATER\n - Rating: ${getInputValue('wWH')}W/unit | Qty: ${whQ}\n - MCB: 20A (6kA) | Cable: 4.0mm² | RCD: 10mA | Circuits: ${whQ}\n - Est. Ib: ${whVd.i}A | Iz: ${whCableChk.Iz}A | Status: ${whCableChk.status}\n - Estimated VD: ${whVd.v}V (${whVd.pct}%)\n${whCont? ` ${whCont}\n` : ''}\n`;
+        }
+        let dbRec = "";
+        if (phase == "1") {
+            const dbSize = totalMCB <= 10? "14 Way" : totalMCB <= 16? "18 Way" : totalMCB <= 22? "24 Way" : totalMCB <= 32? "36 Way" : "42 Way";
+            dbRec = `${dbSize} SPN DB (Metal/PVC)`;
+        } else {
+            const tpnWays = Math.ceil((totalMCB * 1.25) / 3);
+            const stdWays = tpnWays <= 4? 4 : tpnWays <= 6? 6 : tpnWays <= 8? 8 : tpnWays <= 12? 12 : 16;
+            dbRec = `${stdWays}-Way TPN DB (Memuatkan ${stdWays * 3} MCB) (Metal/PVC)`;
+        }
+        let costPoints = ( (getInputValue('qL')+getInputValue('qF')) * getInputValue('rateL') ) + ( getInputValue('qEF') * getInputValue('rateEF') ) + ( getInputValue('qOL') * getInputValue('rateOL') ) + ( getInputValue('qS') * getInputValue('rateS') ) + ( acQty * getInputValue('rateAC') ) + ( getInputValue('qWH') * getInputValue('rateWH') ) + getInputValue('rateDB');
+        const report = `============================================================
+ ${(getInputValue('compName') || "VOLTMASTER PRO").toUpperCase()}
+ ST COMPLIANCE TECHNICAL REPORT (V1.8.0)
+
+REF NO : ${getInputValue('projRef') || "PROJ-" + new Date().getTime()}
+PREPARED BY: ${getInputValue('prepBy') || "SYSTEM"}
+DATE : ${new Date().toLocaleDateString('en-GB')}
+SYSTEM : ${phase}-PHASE | PF: ${pf} | WIRING: ${wStyle.toUpperCase()}
+
+[1. INDIVIDUAL CIRCUIT DETAILS]
+
+${circuitLines}
+[2. DB & PROTECTION]
+
+Main Switch : ${mainS}A (${phase == "1"? "DP" : "TPN"}) (10kA)
+Incoming Cable : ${mainCab}mm² (Cu/PVC/PVC) | Iz: ${mainCableCheck.Iz}A ${mainCableCheck.status}
+Earth Cable : ${earthCab}mm² (Cu/PVC) - As per MS 1979
+Main RCD : 4P ${mainS}A / 100mA Sensitivity (Type S)
+RCD (Socket) : 2P 30mA Sensitivity per Phase (ST Requirement)
+RCD (Heater) : 10mA Sensitivity (ST Requirement)
+Recommended DB : ${dbRec}
+Total MCB Ways : ${totalMCB} + 25% Spare
+
+[3. DESIGN SUMMARY]
+
+Total Connected Load (TCL) : ${(TCL/1000).toFixed(2)} kW
+Maximum Demand (MD) : ${(MD/1000).toFixed(2)} kW
+Auto Diversity Factor : ${autoDF}
+Main Voltage Drop : ${vDropMain.toFixed(2)}V (${vDropPctMain.toFixed(2)}%)
+Status : ${vDropPctMain <= 4? 'PASSED (COMPLIANT)' : 'FAILED (NON-COMPLIANT)'}
+${balancingReport}
+[4. EARTHING & FAULT ANALYSIS]
+
+Earthing System : ${earthType}
+External Impedance (Ze) : ${ze.toFixed(2)} Ohm
+Estimated Loop Zs : ${zs.toFixed(2)} Ohm
+Zs Limit (MCB) : ${zsLimit} Ohm
+Zs Status : ${zsStatus}
+
+Prospective Fault Current : ${psc.toFixed(2)} kA
+Breaking Capacity Check : ${breakingCapacity} kA
+Protection Status : ${pscStatus}
+
+${earthNote}
+
+[ST COMPLIANCE WARNINGS]
+
+${stWarnings.length? stWarnings.map(w => "• " + w).join("\n") : "No critical issues detected."}
+
+[5. ESTIMATED COMMERCIAL VALUATION]
+
+ESTIMATED TOTAL: RM ${costPoints.toLocaleString()}
+*DISCLAIMER: Labor & Installation estimate only. Excludes material
+costs, official permit fees, and site complexities.*
+
+[6. CONSULTANT DISCLAIMER]
+
+This report is generated based on MS 1979 and ST guidelines.
+Final design must be verified and endorsed by a Competent
+Person (Wireman/PW4 or Electrical Engineer) before installation.
+------------------------------------------------------------`;
+        document.getElementById('out').style.display = "block";
+        document.getElementById('out').innerText = report;
+        document.getElementById('pdfBtn').style.display = "block";
+        window.currentSLD = generateSLD(phase, mainS, "100mA", allCircuits, wStyle);
+        document.getElementById('sldPdfBtn').style.display = "block";
+    } catch (e) { alert("Error: " + e.message); console.error(e); }
+}
+
+function generateSLD(phase, mainS, mainRCD, allCircuits, wStyle) {
+    let sld = `PROJECT REF: ${document.getElementById('projRef').value || 'N/A'}\n`;
+    sld += `DATE: ${new Date().toLocaleDateString('en-GB')}\n`;
+    sld += `WIRING TYPE: ${wStyle.toUpperCase()}\n\n`;
+    const pStr = phase == "1"? "SPN" : "TPN";
+    const wiringTxt = wStyle === "conduit"? "HI Conduit" : wStyle === "trunking"? "Steel Trunking" : "Concealed";
+    sld += ` [SOURCE: TNB INCOMING]\n |\n`;
+    sld += ` [MAIN SW: ${mainS}A ${pStr} 10kA]\n |\n`;
+    sld += ` [MAIN RCD: 4P ${mainS}A/100mA Type S]\n |\n`;
+    sld += ` -------- BUSBAR (${pStr}) --------\n`;
+    if (phase == "3") {
+        sld += ` | | |\n`;
+        sld += ` [RCD R] [RCD Y] [RCD B]\n`;
+        sld += ` 2P 30mA 2P 30mA 2P 30mA\n`;
+        sld += ` | | |\n`;
+    }
+    allCircuits.forEach((cct, index) => {
+        let mcbVal = "6A", cable = "1.5mm²";
+        let isSocket = false;
+        let labelText = cct.label;
+
+        if (cct.label.includes("AC")) {
+            mcbVal = cct.watt > 1200? "20A" : "16A";
+            cable = cct.watt > 1200? "4.0mm²" : "2.5mm²";
+        } else if (cct.label.includes("Socket")) {
+            isSocket = true;
+            const sMode = document.getElementById('pS').value;
+            mcbVal = sMode == "10"? "32A" : "20A";
+            cable = sMode == "2"? "4.0mm²" : "2.5mm²";
+            let sType = sMode == "10"? " (Ring)" : " (Radial)";
+            labelText += sType;
+        } else if (cct.label.includes("Heater")) {
+            mcbVal = "20A"; cable = "4.0mm²";
+        }
+        let pLbl = "";
+        if (phase == "3") pLbl = ['R','Y','B'][index % 3] + "-";
+        let rcdNote = "";
+        if (phase == "3" && isSocket) rcdNote = ` -> RCD ${pLbl.replace('-','')} 30mA`;
+        else if (phase == "3" &&!isSocket &&!cct.label.includes("Lighting")) rcdNote = ` -> Direct`;
+        sld += ` |-- [${mcbVal}] -- ${pLbl}${labelText} (${cable} Cu/PVC) | ${wiringTxt}${rcdNote}\n`;
+    });
+    sld += ` |-- [SPARE] -- Reserved Space\n ----------------------------------\n`;
+    sld += `\nNOTES:\n`;
+    sld += `1. Main RCD: 4P 100mA Type S for fault/backup protection per MS IEC 60364-4-41\n`;
+    if (phase == "3") {
+        sld += `2. 30mA RCD: 2P per phase for socket outlets per Regulation 36 ER 1994\n`;
+        sld += `3. Water Heater & Outdoor circuits to have dedicated RCD 10mA/30mA\n`;
+    }
+    sld += `4. All final circuits Zs must comply with BS7671 Table 41.3\n`;
+    return sld;
+}
+
+async function pdf() {
+    const { jsPDF } = window.jspdf;
+    let doc = new jsPDF('p', 'mm', 'a4');
+    const lines = doc.splitTextToSize(document.getElementById('out').innerText, 180);
+    let y = 20;
+    doc.setFont("courier", "bold"); doc.setFontSize(10);
+    doc.text("ELECTRICAL COMPLIANCE REPORT - DESIGN CONSULTANCY", 15, 12);
+    doc.setFont("courier", "normal"); doc.setFontSize(9);
+    lines.forEach((line) => {
+        if (y > 275) { doc.addPage(); y = 20; }
+        doc.text(line, 15, y); y += 5;
+    });
+    doc.save("VoltMaster_v1.8.0_Report.pdf");
+}
+
+async function exportSLDPdf() {
+    if (!window.currentSLD) return alert("Sila generate report terlebih dahulu!");
+    const { jsPDF } = window.jspdf;
+    let doc = new jsPDF('p', 'mm', 'a4');
+    doc.setFont("courier", "bold"); doc.setFontSize(12);
+    doc.text("SINGLE LINE DIAGRAM (SLD) - SCHEMATIC", 15, 20);
+    doc.setLineWidth(0.5); doc.line(15, 22, 195, 22);
+    doc.setFont("courier", "normal"); doc.setFontSize(10);
+    const lines = doc.splitTextToSize(window.currentSLD, 180);
+    doc.text(lines, 15, 35);
+    doc.setLineWidth(0.2); doc.line(15, 275, 195, 275);
+    doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(200, 0, 0);
+    const disc = "IMPORTANT NOTICE: This schematic diagram is generated for preliminary design purposes only. It MUST be verified and endorsed by a Competent Person (Wireman PW4 or Professional Electrical Engineer) in accordance with the Electricity Regulations 1994 and MS 1979 before any installation work begins.";
+    doc.text(doc.splitTextToSize(disc, 180), 15, 280);
+    doc.save("VoltMaster_v1.8.0_SLD_Drawing.pdf");
+}
+
+function saveData() {
+    const inputs = document.querySelectorAll('input, select');
+    const data = {};
+    inputs.forEach(input => { if(input.id) data[input.id] = input.value; });
+    localStorage.setItem('voltmaster_pro_data', JSON.stringify(data));
+}
+
+function loadData() {
+    const savedData = localStorage.getItem('voltmaster_pro_data');
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        Object.keys(data).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = data[id];
+        });
+        validateInput();
+    }
+}
+
+document.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('input', saveData);
+});
+
+window.onload = loadData;
+
+function resetBorang() {
+    if (confirm("Adakah anda pasti untuk mengosongkan semua data dan memulakan projek baru?")) {
+        localStorage.removeItem('voltmaster_pro_data');
+        window.location.reload();
+    }
+}
+</script>
+</body>
+</html>
